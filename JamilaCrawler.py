@@ -1,5 +1,7 @@
 import json
 import os
+import requests
+from bs4 import BeautifulSoup
 
 #region constants
 
@@ -38,3 +40,39 @@ class JamilaCrawler:
         for index in range(0, len(self.data['items'])):
             if self.data['items'][index]['name'] == ingredient_name:
                 return index
+
+    def getIngredientsFromRecipeURL(self):
+        URL = input("Please enter a recipe's URL:\n")
+
+        page = requests.get(URL)
+        soup = BeautifulSoup(page.content, "html.parser")
+
+        ingredients = soup.find_all("li", {"class": "wprm-recipe-ingredient"})
+
+        items_list = []
+
+        for ingredient in ingredients:
+            amount = ingredient.find("span", class_="wprm-recipe-ingredient-amount")
+            unit = ingredient.find("span", class_="wprm-recipe-ingredient-unit")
+            name = ingredient.find("span", class_="wprm-recipe-ingredient-name")
+            note = ingredient.find("span", class_="wprm-recipe-ingredient-notes")
+
+            item = {
+                "name": name.text.lower().strip(),
+                "amount": int(amount.text.lower().strip()),
+                "unit": unit.text.lower().strip(),
+                "note": note.text.lower().strip()
+            }
+
+            items_list.append(item)
+
+        self.data['items'] = items_list
+
+        with open(SHOPPING_CART_FILE_PATH, "w") as file:
+            json.dump(self.data, file)
+    
+
+jc = JamilaCrawler()
+jc.loadJSON(SHOPPING_CART_FILE_PATH)
+# jc.getIngredientsFromRecipeURL()
+jc.printJSON()
