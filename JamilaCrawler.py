@@ -58,19 +58,24 @@ class JamilaCrawler:
             note = ingredient.find("span", class_="wprm-recipe-ingredient-notes")
 
             item = {
-                "name": name.text.lower().strip(),
-                "amount": int(amount.text.lower().strip()),
-                "unit": unit.text.lower().strip(),
-                "note": note.text.lower().strip()
+                "name": name.text.lower().strip() if name is not None else "",
+                "amount": int(amount.text.lower().strip()) if amount is not None else "",
+                "unit": unit.text.lower().strip() if unit is not None else "",
+                "note": note.text.lower().strip() if note is not None else ""
             }
 
             items_list.append(item)
 
-        self.data['items'] = items_list
+        if 'items' not in self.data:
+            self.data['items'] = items_list
+        else:
+            self.updateCart(items_list)
 
         with open(SHOPPING_CART_FILE_PATH, "w") as file:
             json.dump(self.data, file)
     
+    def updateCart(self, items_list):
+        return 0
 
 jc = JamilaCrawler()
 jc.loadJSON(SHOPPING_CART_FILE_PATH)
