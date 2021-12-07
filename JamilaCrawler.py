@@ -30,3 +30,11 @@ class JamilaCrawler:
                 if item['note'] != "":
                     string += " - Note: " + item['note']
                 print(string)
+    
+    def checkForIngredient(self, ingredient_name):
+        return any(ingredient['name']==ingredient_name for ingredient in self.data['items'])
+    
+    def getIngredientIndex(self, ingredient_name):
+        for index in range(0, len(self.data['items'])):
+            if self.data['items'][index]['name'] == ingredient_name:
+                return index
