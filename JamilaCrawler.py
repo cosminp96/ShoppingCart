@@ -11,22 +11,29 @@ SHOPPING_CART_FILE_PATH = os.path.join(os.path.dirname(__file__),SHOPPING_CART_F
 #endregion
 
 class JamilaCrawler:
-    data = {}
 
-    def loadJSON(self, filename):
-        with open(filename, "r+") as file:
-            try:
-                self.data = json.load(file)
-            except:
-                self.data = {}
+    def __init__(self):
+        self.data = {}
+
+    def loadJSON(self):
+        try:
+            with open(SHOPPING_CART_FILE_PATH, "r+") as file:
+                try:
+                    self.data = json.load(file)
+                except:
+                    self.data = {}
+                    json.dump(self.data, file)
+        except:
+            self.data = {}
+            with open(SHOPPING_CART_FILE_PATH, "w+") as file:
                 json.dump(self.data, file)
 
     def printJSON(self):
         if 'items' in self.data:
             for item in self.data['items']:
                 string = "Name: " + item['name']
-                if item['amount'] > "0":
-                    string += " - Amount: " + item['amount']
+                if item['amount'] != "" and item['amount'] > 0:
+                    string += " - Amount: " + str(item['amount'])
                 if item['unit'] != "":
                     string += " - Unit: " + item['unit']
                 if item['note'] != "":
@@ -82,19 +89,33 @@ class JamilaCrawler:
                     update_index = self.getIngredientIndex(item['name'])
                 
             if update_index != -1:
+                self.__structurizeIngredients(update_index, item)
                 if (item['amount'] != '' and item['unit'] == self.data['items'][update_index]['unit']):
-                    self.data['items'][update_index]['amount'] = str(int(item['amount']) + int(self.data['items'][update_index]['amount']))
-                    if self.data['items'][update_index]['amount'] >= 1000:
+                    self.data['items'][update_index]['amount'] = round(item['amount'] + self.data['items'][update_index]['amount'],2)
+                    if int(self.data['items'][update_index]['amount']) >= 1000:
                         if self.data['items'][update_index]['unit'] == "ml":
                             self.data['items'][update_index]['unit'] = "L"
                             self.data['items'][update_index]['amount'] /= 1000
                         if self.data['items'][update_index]['unit'] == "mg":
                             self.data['items'][update_index]['unit'] = "Kg"
                             self.data['items'][update_index]['amount'] /= 1000
+                    if int(self.data['items'][update_index]['amount']) > 1:
+                        if self.data['items'][update_index]['unit'] == "lingura":
+                            self.data['items'][update_index]['unit'] = "linguri"
             else:
                 self.data['items'].append(item)
+    
+    def __structurizeIngredients(self, update_index, item):
+        if self.data['items'][update_index]['unit'].lower() == "l" and item['unit'].lower() == "ml":
+            item['unit'] = "L"
+            item['amount'] /= 1000
+        if self.data['items'][update_index]['unit'].lower() == "kg" and item['unit'].lower() == "mg":
+            item['unit'] = "L"
+            item['amount'] /= 1000
+        if self.data['items'][update_index]['unit'].lower() == "linguri" and item['unit'].lower() == "lingura":
+            item['unit'] = "linguri"
 
 jc = JamilaCrawler()
-jc.loadJSON(SHOPPING_CART_FILE_PATH)
-# jc.getIngredientsFromRecipeURL()
+jc.loadJSON()
+jc.getIngredientsFromRecipeURL()
 jc.printJSON()
