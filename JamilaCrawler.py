@@ -90,7 +90,7 @@ class JamilaCrawler:
                 
             if update_index != -1:
                 self.__structurizeIngredients(update_index, item)
-                if (item['amount'] != '' and item['unit'] == self.data['items'][update_index]['unit']):
+                if item['amount'] != '' and item['unit'] == self.data['items'][update_index]['unit'] and item['note'] == self.data['items'][update_index]['note']:
                     self.data['items'][update_index]['amount'] = round(item['amount'] + self.data['items'][update_index]['amount'],2)
                     if int(self.data['items'][update_index]['amount']) >= 1000:
                         if self.data['items'][update_index]['unit'] == "ml":
