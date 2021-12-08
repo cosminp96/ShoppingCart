@@ -75,7 +75,24 @@ class JamilaCrawler:
             json.dump(self.data, file)
     
     def updateCart(self, items_list):
-        return 0
+        for item in items_list:
+            update_index = -1
+            if (self.data != {}):
+                if (self.checkForIngredient(item['name'])):
+                    update_index = self.getIngredientIndex(item['name'])
+                
+            if update_index != -1:
+                if (item['amount'] != '' and item['unit'] == self.data['items'][update_index]['unit']):
+                    self.data['items'][update_index]['amount'] = str(int(item['amount']) + int(self.data['items'][update_index]['amount']))
+                    if self.data['items'][update_index]['amount'] >= 1000:
+                        if self.data['items'][update_index]['unit'] == "ml":
+                            self.data['items'][update_index]['unit'] = "L"
+                            self.data['items'][update_index]['amount'] /= 1000
+                        if self.data['items'][update_index]['unit'] == "mg":
+                            self.data['items'][update_index]['unit'] = "Kg"
+                            self.data['items'][update_index]['amount'] /= 1000
+            else:
+                self.data['items'].append(item)
 
 jc = JamilaCrawler()
 jc.loadJSON(SHOPPING_CART_FILE_PATH)
