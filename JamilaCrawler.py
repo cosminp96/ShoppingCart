@@ -3,6 +3,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import re
+import sys
 
 #region constants
 
@@ -88,9 +89,9 @@ class JamilaCrawler:
         return name_ingredient
 
     def validateIngredientAmount(self, amount):
-        amount_ingredient = ""
+        amount_ingredient = 1
         if amount is not None:
-            if not self.validateAmount(amount.text):
+            if not self.validateAmount(amount.text.lower().strip()):
                 if '/' in amount.text:
                     amount_ingredient = self.convertFractionToFloat(amount.text.lower().strip())
                 if '-' in amount.text:
@@ -112,10 +113,14 @@ class JamilaCrawler:
         return note_ingredient
 
     def getIngredientsFromRecipeURL(self):
-        URL = input("Please enter a recipe's URL:\n")
+        URL = ""
+        if (len(sys.argv) == 1):
+            URL = input("Please enter a recipe's URL:\n")
 
-        while not self.validateURL(URL):
-            URL = input("Incorrect URL format, please enter a correct recipe URL:\n")
+            while not self.validateURL(URL):
+                URL = input("Incorrect URL format, please enter a correct recipe URL:\n")
+        else:
+            URL = sys.argv[1]
 
         page = requests.get(URL)
         soup = BeautifulSoup(page.content, "html.parser")
@@ -169,6 +174,10 @@ class JamilaCrawler:
             if update_index != -1:
                 self.__structurizeIncomingIngredients(update_index, item)
                 if item['amount'] != '' and item['unit'] == self.data['items'][update_index]['unit'] and item['note'] == self.data['items'][update_index]['note']:
+                    self.data['items'][update_index]['amount'] = round(item['amount'] + self.data['items'][update_index]['amount'],2)
+                    self.__structurizeOutgoingIngredients(update_index)
+                elif item['amount'] == '' and item['unit'] == self.data['items'][update_index]['unit'] and item['note'] == self.data['items'][update_index]['note']:
+                    item['amount'] = 1
                     self.data['items'][update_index]['amount'] = round(item['amount'] + self.data['items'][update_index]['amount'],2)
                     self.__structurizeOutgoingIngredients(update_index)
             else:
