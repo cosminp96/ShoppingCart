@@ -4,6 +4,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import sys
+from tkinter import *
+from tkinter import ttk
 
 #region constants
 
@@ -227,7 +229,84 @@ class JamilaCrawler:
             if self.data['items'][update_index]['unit'].lower() == "lingurita cu varf":
                 self.data['items'][update_index]['unit'] = "lingurite cu varf"
 
+    def getJsonString(self):
+        return_string=""
+        if 'items' in self.data:
+            string = ""
+            for item in self.data['items']:
+                string += "Name: " + item['name']
+                if item['amount'] != "" and item['amount'] > 0:
+                    string += " - Amount: " + str(item['amount'])
+                if item['unit'] != "":
+                    string += " - Unit: " + item['unit']
+                if item['note'] != "":
+                    string += " - Note: " + item['note']
+                string += "\n"
+            return_string += string
+        if 'recipes' in self.data:
+            recipes_list = "Recipes: "
+            for i in range(0, len(self.data['recipes'])):
+                if (i == len(self.data['recipes']) - 1):
+                    recipes_list += self.data['recipes'][i]['name']
+                else:
+                    recipes_list += self.data['recipes'][i]['name'] + ", "
+            recipes_list += "\n"
+            return_string += recipes_list
+        return return_string
+
+    def initializeInterfaceWithText(self, jc):
+        root = Tk()
+        frm = ttk.Frame(root, padding=10)
+        frm.grid()
+        ttk.Label(frm, text=jc.getJsonString()).grid(column=0, row=0)
+        ttk.Button(frm, text="Quit", command=root.destroy).grid(column=0, row=1)
+        root.mainloop()
+
+    def initializeInterfaceWithTable(self, jc):
+        root = Tk()
+        root.title("Shopping List")
+
+        style=ttk.Style()
+        style.theme_use('clam')
+
+        main_frame = Frame(root)
+        main_frame.pack()
+
+        table = ttk.Treeview(main_frame, height=len(jc.data['items']))
+
+        table['columns'] = ('name', 'amount', 'unit', 'note')
+
+        table.column("#0", width=0, stretch=NO)
+        table.column('name', anchor=CENTER, width=150)
+        table.column('amount', anchor=CENTER, width=100)
+        table.column('unit', anchor=CENTER, width=150)
+        table.column('note', anchor=CENTER, width=100)
+
+        table.heading("#0", text="", anchor=CENTER)
+        table.heading('name', text="Name", anchor=CENTER)
+        table.heading('amount', text="Amount", anchor=CENTER)
+        table.heading('unit', text="Unit", anchor=CENTER)
+        table.heading('note', text="Note", anchor=CENTER)
+
+        for i in range(0, len(jc.data['items'])):
+            table.insert(parent='', index='end', iid=i, text='',values=(jc.data['items'][i]['name'], jc.data['items'][i]['amount'], jc.data['items'][i]['unit'], jc.data['items'][i]['note']))
+            if i % 2 == 0:
+                table.item(i, tags='light_gray')
+            else:
+                table.item(i, tags='dark_gray')
+        table.tag_configure('light_gray', background='gray')
+        table.tag_configure('white', background='white')
+
+        table.pack()
+
+        root.mainloop()
+
+
+
 jc = JamilaCrawler()
 jc.loadJSON()
+# jc.initializeInterfaceWithText(jc)
 jc.getIngredientsFromRecipeURL()
-jc.printJSON()
+jc.initializeInterfaceWithTable(jc)
+
+# jc.printJSON()
